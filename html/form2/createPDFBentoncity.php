@@ -1,0 +1,1308 @@
+<?php
+
+//ini_set('display_errors', 'On');
+
+//error_reporting(-1);
+
+include '/home1/columch7/public_html/columbiaphysicaltherapyinc/form2/config.php';
+//include '/var/www/html/form2/config.php';
+
+require_once($fpdf);
+require_once($fpdi);
+
+function decrypt_text($value, $key1, $key2)
+{
+   if(!$value || !$key1 || !$key2) return false;
+ 
+   $crypttext = base64_decode($value);
+   $decrypttext = mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $key1, $crypttext, MCRYPT_MODE_ECB, $key2);
+   return trim($decrypttext);
+}
+
+// initiate FPDI
+$pdf = new FPDI();
+
+// get the page count
+
+$pageCount = $pdf->setSourceFile('Benton-forms.pdf');
+
+// iterate through all pages
+if ($pageNo = 1) {
+    // import a page
+    $templateId = $pdf->importPage($pageNo);
+    // get the size of the imported page
+    $size = $pdf->getTemplateSize($templateId);
+    	
+    // create a page (landscape or portrait depending on the imported page size)
+    if ($size['w'] > $size['h']) {
+        $pdf->AddPage('L', array($size['w'], $size['h']));
+    } else {
+        $pdf->AddPage('P', array($size['w'], $size['h']));
+    }
+
+    // use the imported page
+    $pdf->useTemplate($templateId);
+
+	$pdf->SetAutoPageBreak(false);
+    
+
+//$db = new SQLite3('/home1/columch7/public_html/Columbia.db');
+$db = new SQLite3($columbiaDB);
+
+$ID = $_GET["ID"];
+$AUTH = $_GET["AUTH"];
+
+$results = $db->query('SELECT * FROM benton_new_patients where ID =' . $ID . ' and AUTH = ' .$AUTH);
+
+//$results = $db->query('SELECT * FROM Pasco_new_patients where ID=24');
+
+$row = $results->fetchArray();
+
+//print var_dump($row);
+//exit();
+
+//Name
+    $pdf->SetFont('Helvetica');
+    $pdf->SetXY(36, 36.5);
+    $pdf->Write(10, $row["FIRST_NAME"] . " " . $row["LAST_NAME"]);
+	
+
+//Phone
+	if (strlen ($row["PHONE"]) > 4){
+    $pdf->SetXY(150, 36.5);
+    $pdf->Write(10, $row["PHONE"]);
+	}
+
+//Cell Phone
+	if (strlen ($row["CELL_PHONE"]) > 4){
+    $pdf->SetXY(150, 43);
+    $pdf->Write(10, $row["CELL_PHONE"]);
+}
+
+//Street Address
+    $pdf->SetXY(25, 43);
+    $pdf->Write(10, $row["ADDRESS"]);
+
+//Email
+    $pdf->SetXY(135.5, 49.5);
+    $pdf->Write(10, $row["EMAIL"]);
+
+//City
+    $pdf->SetXY(19, 49.5);
+    $pdf->Write(10, $row["CITY"]);
+
+//State
+    $pdf->SetXY(76, 49.5);
+    $pdf->Write(10, $row["STATE"]);
+
+//Zip
+    $pdf->SetXY(100, 49.5);
+    $pdf->Write(10, $row["ZIP"]);
+
+//DOB
+    $pdf->SetXY(35, 56);
+    $pdf->Write(10, decrypt_text($row["DOB"],$key1,$key2)); 
+
+if ('M' == $row["GENDER"]){
+//Gender: Male
+    $pdf->SetXY(75.4, 56);
+    $pdf->Write(10, 'x');
+}
+else{
+//Gender: Female
+    $pdf->SetXY(100.6, 56);
+    $pdf->Write(10, 'x');
+}
+
+//SSN
+    $pdf->SetXY(150, 56);
+    $pdf->Write(10, decrypt_text($row["SSN"],$key1,$key2));
+
+//Student
+if ('Y' == $row["STUDENT"]){
+    $pdf->SetXY(100.2, 62.4);
+    $pdf->Write(10, 'x');
+}
+
+//Employer
+    $pdf->SetXY(28, 62.5);
+    $pdf->Write(10, $row["EMPLOYER"]);
+
+//Work Phone
+	if (strlen ($row["WORK_PHONE"]) > 4){
+	$pdf->SetXY(150, 62.5);
+    $pdf->Write(10, $row["WORK_PHONE"]);
+}
+
+//Employer address
+if (strlen($row["EMPLOYER_ADDRESS"]) < 31){
+    $pdf->SetXY(42.5, 68.5);
+    $pdf->Write(10, $row["EMPLOYER_ADDRESS"]);
+} else {
+    $pdf->SetFont('Helvetica','',10);
+    $pdf->SetXY(42.5, 69);
+    $pdf->Write(10, $row["EMPLOYER_ADDRESS"]);
+}
+
+//Employer city
+    $pdf->SetFont('Helvetica','',12);
+    $pdf->SetXY(110, 68.5);
+    $pdf->Write(10, $row["EMPLOYER_CITY"]);
+
+//Employer State
+    $pdf->SetXY(157, 68.5);
+    $pdf->Write(10, $row["EMPLOYER_STATE"]);
+
+//Employer zip
+    $pdf->SetXY(177, 68.5);
+    $pdf->Write(10, $row["EMPLOYER_ZIP"]);
+
+
+//Physician
+    $pdf->SetXY(41, 75);
+    $pdf->Write(10, $row["REFERRING_PHYSICIAN"]);
+
+//Physician address
+if (strlen($row["PHYSICIAN_ADDRESS"]) < 21){
+    $pdf->SetXY(157, 75);
+    $pdf->Write(10, $row["PHYSICIAN_ADDRESS"]);
+}else {
+	$pdf->SetFont('Helvetica','',10);
+	$pdf->SetXY(157, 75);
+    $pdf->Write(10, $row["PHYSICIAN_ADDRESS"]);
+}
+
+//Physician city
+	$pdf->SetFont('Helvetica','',12);
+    $pdf->SetXY(20, 81.5);
+    $pdf->Write(10, $row["PHYSICIAN_CITY"]);
+
+//Physician state
+    $pdf->SetXY(78, 81.5);
+    $pdf->Write(10, $row["PHYSICIAN_STATE"]);
+
+//Physician zip
+    $pdf->SetXY(101, 81.5);
+    $pdf->Write(10, $row["PHYSICIAN_ZIP"]);
+
+//Physician phone
+	if (strlen ($row["PHYSICIAN_PHONE"]) > 4){
+    $pdf->SetXY(145, 81.5);
+    $pdf->Write(10, $row["PHYSICIAN_PHONE"]);
+}
+
+//Spouse name
+    $pdf->SetXY(53, 88.5);
+    $pdf->Write(10, $row["SPOUSE_FIRST"] . " " . $row["SPOUSE_LAST"]);
+
+//Spouse employer
+    $pdf->SetXY(142, 88.5);
+    $pdf->Write(10, $row["SPOUSE_EMPLOYER"]);
+
+//Spouse Cell Phone
+	if (strlen ($row["SPOUSE_CELL_PHONE"]) > 4){
+    $pdf->SetXY(35, 94.5);
+    $pdf->Write(10, $row["SPOUSE_CELL_PHONE"]);
+}
+
+//Spouse work phone
+	if (strlen ($row["SPOUSE_WORK_PHONE"]) > 4){
+    $pdf->SetXY(100, 94.5);
+    $pdf->Write(10, $row["SPOUSE_WORK_PHONE"]);
+}
+
+//Mother's name
+    $pdf->SetXY(51.5, 107.5);
+    $pdf->Write(10, $row["MOTHER_FIRST"] . " " . $row["MOTHER_LAST"]);
+
+//Mother's address
+    $pdf->SetXY(134.5, 107.5);
+    $pdf->Write(10, $row["MOTHER_ADDRESS"]);
+
+//Mother's city
+    $pdf->SetXY(20, 114.2);
+    $pdf->Write(10, $row["MOTHER_CITY"]);
+
+//Mother's State
+    $pdf->SetXY(108, 114.2);
+    $pdf->Write(10, $row["MOTHER_STATE"]);
+
+//Mother's zip
+    $pdf->SetXY(134, 114.2);
+    $pdf->Write(10, $row["MOTHER_ZIP"]);
+
+//Mother's DOB
+	if (decrypt_text($row["MOTHER_DOB"],$key1,$key2) !== '//'){
+    $pdf->SetXY(171, 114.2);
+    $pdf->Write(10, decrypt_text($row["MOTHER_DOB"],$key1,$key2));
+}
+
+//Mother's employer
+    $pdf->SetXY(27.5, 120.5);
+    $pdf->Write(10, $row["MOTHER_EMPLOYER"]);
+
+//Mother's employer address
+    $pdf->SetXY(134, 120.5);
+    $pdf->Write(10, $row["MOTHER_EMPLOYER_ADDRESS"]);
+
+//Mother's employer city
+    $pdf->SetXY(20, 127);
+    $pdf->Write(10, $row["MOTHER_EMPLOYER_CITY"]);
+
+//Mother's employer state
+    $pdf->SetXY(91, 127);
+    $pdf->Write(10, $row["MOTHER_EMPLOYER_STATE"]);
+
+//Mother's employer zip
+    $pdf->SetXY(118, 127);
+    $pdf->Write(10, $row["MOTHER_EMPLOYER_ZIP"]);
+
+//Mother's employer phone
+	if (strlen ($row["MOTHER_EMPLOYER_PHONE"]) > 4){
+    $pdf->SetXY(157, 127);
+    $pdf->Write(10, $row["MOTHER_EMPLOYER_PHONE"]);
+}
+
+//Father's name
+    $pdf->SetXY(50, 133.5);
+    $pdf->Write(10, $row["FATHER_FIRST"] . " " . $row["FATHER_LAST"]);
+
+//Father's address
+    $pdf->SetXY(133, 133.5);
+    $pdf->Write(10, $row["FATHER_ADDRESS"]);
+
+
+//Father's city
+    $pdf->SetXY(20, 140);
+    $pdf->Write(10, $row["FATHER_CITY"]);
+
+//Father's State
+    $pdf->SetXY(108, 140);
+    $pdf->Write(10, $row["FATHER_STATE"]);
+
+//Father's zip
+    $pdf->SetXY(134, 140);
+    $pdf->Write(10, $row["FATHER_ZIP"]);
+
+//Father's DOB
+	if (decrypt_text($row["FATHER_DOB"],$key1,$key2) !== '//'){
+    $pdf->SetXY(170, 140);
+    $pdf->Write(10, decrypt_text($row["FATHER_DOB"],$key1,$key2));
+}
+
+//Father's employer
+    $pdf->SetXY(27, 146);
+    $pdf->Write(10, $row["FATHER_EMPLOYER"]);
+
+//Father's employer address
+    $pdf->SetFont('Helvetica','',12);
+    $pdf->SetXY(118.5, 146);
+    $pdf->Write(10, $row["FATHER_EMPLOYER_ADDRESS"]);
+
+//Father's employer city
+    $pdf->SetXY(20, 153);
+    $pdf->Write(10, $row["FATHER_EMPLOYER_CITY"]);
+
+//Father's employer state
+    $pdf->SetXY(91, 153);
+    $pdf->Write(10, $row["FATHER_EMPLOYER_STATE"]);
+
+//Father's employer zip
+    $pdf->SetXY(118, 153);
+    $pdf->Write(10, $row["FATHER_EMPLOYER_ZIP"]);
+
+//Father's employer phone
+	if (strlen ($row["FATHER_EMPLOYER_PHONE"]) > 4){
+    $pdf->SetXY(157, 153);
+    $pdf->Write(10, $row["FATHER_EMPLOYER_PHONE"]);
+}
+
+//Primary Insurance
+    $pdf->SetXY(25, 168);
+    $pdf->Write(10, $row["PRIMARY_INSURANCE_NAME"]);
+
+//Primary Insurance Address
+    $pdf->SetXY(24, 173);
+    $pdf->Write(10, $row["PRIMARY_INSURANCE_ADDRESS"]);
+
+//Primary Insurance Subscriber's Name
+    $pdf->SetXY(37, 178);
+    $pdf->Write(10, $row["PI_SUBSCRIBER_FIRST"] . " " . $row["PI_SUBSCRIBER_LAST"]);
+
+//Primary Insurance Subscriber's ID
+    $pdf->SetXY(45, 183);
+    $pdf->Write(10, decrypt_text($row["PI_SUBSCRIBER_ID"],$key1,$key2));
+
+//Primary Insurance Subscriber's Group Number
+    $pdf->SetXY(40, 188);
+    $pdf->Write(10, $row["PI_SUBSCRIBER_GROUP_NUMBER"]);
+
+//Secondary Insurance
+    $pdf->SetXY(130, 167);
+    $pdf->Write(10, $row["SECONDARY_INSURANCE_NAME"]);
+
+//Secondary Insurance Address
+    $pdf->SetXY(125.5, 172);
+    $pdf->Write(10, $row["SECONDARY_INSURANCE_ADDRESS"]);
+
+
+//Secondary Insurance Subscriber's Name
+    $pdf->SetFont('Helvetica','',12);
+    $pdf->SetXY(140, 177);
+    $pdf->Write(10, $row["SI_SUBSCRIBER_FIRST"] . " " . $row["PI_SUBSCRIBER_LAST"]);
+
+//Secondary Insurance Subscriber's ID
+    $pdf->SetXY(148, 182);
+    $pdf->Write(10, decrypt_text($row["SI_SUBSCRIBER_ID"],$key1,$key2));
+
+//Secondary Insurance Subscriber's Group Number
+    $pdf->SetXY(140, 187);
+    $pdf->Write(10, $row["SI_SUBSCRIBER_GROUP_NUMBER"]);
+
+//Injury is a Result of:
+if ($row["NEED_TREATMENT_FOR"] == 'OTI') {
+//On the Job Injury
+    $pdf->SetXY(13, 206.5);
+    $pdf->Write(10, 'X');
+} elseif ($row["NEED_TREATMENT_FOR"] == 'Auto') {
+//Auto
+    $pdf->SetXY(38.5, 206.5);
+    $pdf->Write(10, 'X');
+} elseif ($row["NEED_TREATMENT_FOR"] == 'Accident'){
+//Accident
+    $pdf->SetXY(64, 206.5);
+    $pdf->Write(10, 'X');
+}
+
+//Date of Injury
+	if ($row["DATE_OF_INJURY"] !== '//'){
+    $pdf->SetXY(37, 197);
+    $pdf->Write(10, $row["DATE_OF_INJURY"]);
+}
+
+//Claim Number
+    $pdf->SetXY(37, 202);
+    $pdf->Write(10, decrypt_text($row["CLAIM_NUMBER"],$key1,$key2));
+
+//Emergency Contact
+    $pdf->SetXY(52, 215.5);
+    $pdf->Write(10, $row["EMERGENCY_CONTACT_FIRST"] . " " . $row["EMERGENCY_CONTACT_LAST"]);
+
+//Emergency Contact Phone Number
+	if (strlen ($row["EMERGENCY_CONTACT_PHONE"]) > 4){
+    $pdf->SetXY(155, 215.5);
+    $pdf->Write(10, $row["EMERGENCY_CONTACT_PHONE"]);
+}
+
+//Signature
+	$pdf->SetFont('Helvetica','',12);
+    	$pdf->SetXY(32, 248);
+   	$pdf->Write(10, $row["SIGNATURE"]);
+
+//Today's Date
+	$pdf->SetXY(165, 248);
+   	$pdf->Write(10, $row["TODAY_DATE"]);
+
+}
+
+///////////////////////////////////////////////////////////////PAGE 2/////////////////////////////////////////////////////////////////////
+////////////PAGE 2///////PAGE 2///////PAGE 2///////////////////PAGE 2///////////PAGE 2///////////PAGE 2////////////PAGE 2/////////////////
+///////////////////////////////////////////////////////////////PAGE 2/////////////////////////////////////////////////////////////////////
+
+if ($pageNo = 2) {
+    // import a page
+    $templateId = $pdf->importPage($pageNo);
+    // get the size of the imported page
+    $size = $pdf->getTemplateSize($templateId);
+    	
+    // create a page (landscape or portrait depending on the imported page size)
+    if ($size['w'] > $size['h']) {
+        $pdf->AddPage('L', array($size['w'], $size['h']));
+    } else {
+        $pdf->AddPage('P', array($size['w'], $size['h']));
+    }
+
+    // use the imported page
+    $pdf->useTemplate($templateId);
+
+	$pdf->SetAutoPageBreak(false);
+    
+
+//$db = new SQLite3('/home1/columch7/public_html/Columbia.db');
+$db = new SQLite3($columbiaDB);
+
+$ID = $_GET["ID"];
+$AUTH = $_GET["AUTH"];
+
+$results = $db->query('SELECT * FROM benton_new_patients where ID =' . $ID . ' and AUTH = ' .$AUTH);
+
+//$results = $db->query('SELECT * FROM Pasco_new_patients where ID=24');
+
+$row = $results->fetchArray();
+
+//print var_dump($row);
+//exit();
+
+//Name
+    $pdf->SetFont('Helvetica');
+    $pdf->SetXY(23, 44);
+    $pdf->Write(10, $row["FIRST_NAME"] . " " . $row["LAST_NAME"]);
+	
+//Date
+	$pdf->SetXY(155, 44);
+    $pdf->Write(10, $row["TODAY_DATE"]);
+
+//Injury
+	$pdf->SetXY(71, 52);
+    $pdf->Write(10, $row["INJURY"]);
+
+//Injury how	
+	$pdf->SetXY(84, 60);
+    $pdf->Write(10, $row["INJURY_HOW"]);
+
+//Injury START	
+	$pdf->SetXY(65, 67.5);
+    $pdf->Write(10, $row["INJURY_START"]);
+
+//Type of work	
+	$pdf->SetXY(65, 75.5);	
+    $pdf->Write(10, $row["WORK_TYPE"]);
+
+//Working now?	
+if ('Y' == $row["WORKING_NOW"]){
+	$pdf->SetXY(138.6, 83);	
+    $pdf->Write(10, 'X');
+}elseif ('N' == $row["WORKING_NOW"]){
+	$pdf->SetXY(151.2, 83);	
+    $pdf->Write(10, 'X');
+}
+
+//Not working reason	
+if ('Y' == $row["NOT_WORKING_REASON"]){
+	$pdf->SetXY(138.6, 90.5);	
+    $pdf->Write(10, 'X');
+}elseif ('N' == $row["NOT_WORKING_REASON"]){
+	$pdf->SetXY(152, 90.5);	
+    $pdf->Write(10, 'X');
+}
+
+//Symptom free?	
+if ('Y' == $row["SYMPTOM_FREE"]){
+	$pdf->SetXY(138.6, 98.5);	
+    $pdf->Write(10, 'X');
+}elseif ('N' == $row["SYMPTOM_FREE"]){
+	$pdf->SetXY(151.2, 98.5);	
+    $pdf->Write(10, 'X');
+}
+
+//Similar symptoms??	
+if ('Y' == $row["SIMILAR_SYMPTOM"]){
+	$pdf->SetXY(138.6, 106.2);	
+    $pdf->Write(10, 'X');
+}elseif ('N' == $row["SIMILAR_SYMPTOM"]){
+	$pdf->SetXY(151.2, 106.2);	
+    $pdf->Write(10, 'X');
+}
+
+//Treatment	
+if (strstr($row["TREATMENT"], 'PT')){
+	$pdf->SetXY(45.7, 121.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["TREATMENT"], 'chiropractic')){
+	$pdf->SetXY(81.1, 121.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["TREATMENT"], 'medical')){
+	$pdf->SetXY(109.7, 121.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["TREATMENT"], 'other')){
+	$pdf->SetXY(138.6, 121.6);	
+    $pdf->Write(10, 'X');
+}
+
+//Eases Pain	
+if (strstr( $row["EASE_PAIN"], 'sit')){
+	$pdf->SetXY(75, 129.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["EASE_PAIN"], 'stand')){
+	$pdf->SetXY(92.8, 129.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["EASE_PAIN"], 'walk')){
+	$pdf->SetXY(117, 129.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["EASE_PAIN"], 'lie')){
+	$pdf->SetXY(139.4, 129.5);	
+    $pdf->Write(10, 'X');
+}
+
+//Makes pain worse
+if (strstr( $row["PAIN_WORSE"], 'sit')){
+	$pdf->SetXY(72, 137.1);	
+    	$pdf->Write(10, 'X');
+}if (strstr( $row["PAIN_WORSE"], 'stand')){
+	$pdf->SetXY(90.7, 137.1);	
+   	$pdf->Write(10, 'X');
+}if (strstr( $row["PAIN_WORSE"], 'walk')){
+	$pdf->SetXY(117.8, 137.1);	
+    	$pdf->Write(10, 'X');
+}if (strstr( $row["PAIN_WORSE"], 'lie')){
+	$pdf->SetXY(139.3, 137.1);	
+    	$pdf->Write(10, 'X');
+}
+
+//Feelings of Needles or numbness	
+if ('Y' == $row["PINS_NEEDLES"]){
+	$pdf->SetXY(19.4, 160.3);	
+    	$pdf->Write(10, 'X');
+}elseif ('N' == $row["PINS_NEEDLES"]){
+	$pdf->SetXY(37.2, 160.3);	
+    	$pdf->Write(10, 'X');
+}
+
+//Other problems	
+if ('Y' == $row["OTHER_PROBLEMS"]){
+	$pdf->SetXY(19.4, 175.7);	
+    $pdf->Write(10, 'X');
+}elseif ('N' == $row["OTHER_PROBLEMS"]){
+	$pdf->SetXY(37.2, 175.7);	
+    	$pdf->Write(10, 'X');
+}
+
+//Medications	
+if ('Y' == $row["MEDICATIONS"]){
+	$pdf->SetXY(19.4, 191.4);	
+    	$pdf->Write(10, 'X');
+}elseif ('N' == $row["MEDICATIONS"]){
+	$pdf->SetXY(37.7, 191.4);	
+    	$pdf->Write(10, 'X');
+}
+
+//Medications List
+	$pdf->SetXY(12, 206.8);	
+    $pdf->Write(10, $row["MEDICATION_LIST"]);
+
+//DISCOMFORT
+if (strstr( $row["DISCOMFORT"], 'head')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(125.2, 147.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr( $row["DISCOMFORT"], 'right neck')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(177.6, 159.3);	
+   	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'left neck')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(174.6, 159.3);	
+  	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'R shoulder')){
+	$pdf->SetTextColor(255, 0, 0);	
+	$pdf->SetXY(113.7, 167.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'L shoulder')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(136.8, 167.3);	
+   	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'R arm')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(113.3, 177.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'L arm')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(137.3, 177.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'R elbow')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(189.1, 187.8);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'L elbow')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(164.3, 187.8);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'R wrist')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(193.3, 203.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'L wrist')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(159.8, 203.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'Right Hand')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(106.5, 207.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'Left Hand')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(143.3, 207.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'R U back')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(178.3, 167.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'R M back')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(181.3, 177);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'R L back')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(181.3, 187.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'L U back')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(175, 167.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'L M back')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(172, 177.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'L L back')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(172, 187.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'R chest')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(119.5, 172.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'L chest')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(131.7, 172.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'M chest')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(125.4, 172.3);	
+ 	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'L abdomen')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(131.7, 189.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'R abdomen')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(119.5, 189.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'M abdomen')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(125.4, 189.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'R hip')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(115.3, 202.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'L Hip')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(135.3, 202.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'pelvis')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(125.4, 200.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'R thigh')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(119.3, 210.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'L thigh')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(131.3, 210.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'R knee')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(121.5, 226.5);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'L knee')){	
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(128.3, 226.5);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'R low leg')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(120, 237.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'L low leg')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(128.8, 237.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'R ankle')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(178.3, 249.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'L ankle')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(172.3, 249.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'R foot')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(178.3, 257.3);	
+    	$pdf->Write(10, 'X');
+}if (strstr($row["DISCOMFORT"], 'L foot')){
+	$pdf->SetTextColor(255, 0, 0);
+	$pdf->SetXY(172.3, 257.3);	
+    	$pdf->Write(10, 'X');
+}
+
+}
+
+
+///////////////////////////////////////////////////////////////PAGE 3/////////////////////////////////////////////////////////////////////
+////////////PAGE 3///////PAGE 3///////PAGE 3///////////////////PAGE 3///////////PAGE 3///////////PAGE 3////////////PAGE 3/////////////////
+///////////////////////////////////////////////////////////////PAGE 3/////////////////////////////////////////////////////////////////////
+
+if ($pageNo = 3) {
+    // import a page
+    $templateId = $pdf->importPage($pageNo);
+    // get the size of the imported page
+    $size = $pdf->getTemplateSize($templateId);
+    	
+    // create a page (landscape or portrait depending on the imported page size)
+    if ($size['w'] > $size['h']) {
+        $pdf->AddPage('L', array($size['w'], $size['h']));
+    } else {
+        $pdf->AddPage('P', array($size['w'], $size['h']));
+    }
+
+    // use the imported page
+    $pdf->useTemplate($templateId);
+
+	$pdf->SetAutoPageBreak(false);
+	
+	$pdf->SetFillColor(255, 242, 0);
+    
+
+//$db = new SQLite3('/home1/columch7/public_html/Columbia.db');
+$db = new SQLite3($columbiaDB);
+
+$ID = $_GET["ID"];
+$AUTH = $_GET["AUTH"];
+
+$results = $db->query('SELECT * FROM benton_new_patients where ID =' . $ID . ' and AUTH = ' .$AUTH);
+
+//$results = $db->query('SELECT * FROM Pasco_new_patients where ID=24');
+
+$row = $results->fetchArray();
+
+//print var_dump($row);
+//exit();
+
+//Name
+    $pdf->SetFont('Helvetica');
+	$pdf->SetTextColor(0, 0, 0);
+	$pdf->SetFontSize(10);
+    $pdf->SetXY(17, 10.7);
+    $pdf->Write(10, $row["FIRST_NAME"] . " " . $row["LAST_NAME"]);
+	
+//Date
+	$pdf->SetFontSize(10);
+	$pdf->SetXY(115, 10.7);
+    $pdf->Write(10, $row["TODAY_DATE"]);
+
+//Age
+	$pdf->SetFontSize(10);
+	$pdf->SetXY(168, 10.7);
+    $pdf->Write(10, $row["AGE"]);
+
+//Gender	
+if ('M' == $row["GENDER"]){
+	$pdf->Rect(195, 13, 4, 4);	
+}elseif ('F' == $row["GENDER"]){
+	$pdf->Rect(200.5, 13, 3.5, 4);
+}
+
+//Dominant hand
+	$pdf->SetFontSize(10);
+	$pdf->SetXY(38, 14.9);
+    $pdf->Write(10, $row["HAND"]);
+
+//Occupation
+	$pdf->SetFontSize(10);
+	$pdf->SetXY(114, 14.9);	
+    $pdf->Write(10, $row["OCCUPATION"]);
+
+//Leisure activities
+	$pdf->SetFontSize(10);
+	$pdf->SetXY(33, 19);	
+    $pdf->Write(10, $row["LEISURE"]);
+
+//Health rating	
+if ('excellent' == $row["HEALTH"]){
+	$pdf->Rect(46, 29.7, 16, 4);	
+}elseif ('good' == $row["HEALTH"]){
+	$pdf->Rect(81.5, 29.7, 12, 4);
+}elseif ('fair' == $row["HEALTH"]){
+	$pdf->Rect(119, 29.7, 12, 4);
+}elseif ('poor' == $row["HEALTH"]){
+	$pdf->Rect(157, 29.7, 12, 4);
+}
+
+//Exercise	
+if ('Y' == $row["EXERCISE"]){
+	$pdf->Rect(106, 37.5, 12, 4);
+}elseif ('N' == $row["EXERCISE"]){
+	$pdf->Rect(130.5, 37.5, 12, 4);
+}
+
+//Describe exercise	
+	$pdf->SetFontSize(10);
+	$pdf->SetXY(70, 38.7);	
+    $pdf->Write(10, $row["EXERCISE_DESCRIPTION"]);
+	
+//Exercise frequency
+	$pdf->SetFontSize(10);
+	$pdf->SetXY(115, 43.2);	
+    $pdf->Write(10, $row["EXERCISE_FREQUENCY"]);
+
+//Exercise length
+	$pdf->SetFontSize(10);
+	$pdf->SetXY(105, 47.5);	
+    $pdf->Write(10, $row["EXERCISE_LENGTH"]);
+
+//Medical history	
+if (strstr( $row["DIAGNOSIS"], 'stroke')){
+	$pdf->SetXY(7, 67.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'migrain')){
+	$pdf->SetXY(7, 71.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'high bp')){
+	$pdf->SetXY(7, 76);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'emphysema')){
+	$pdf->SetXY(7, 80.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'tuberculosis')){
+	$pdf->SetXY(7, 85);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'rh arthritis')){
+	$pdf->SetXY(7, 89.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'kidney disease')){
+	$pdf->SetXY(7, 93.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'hepatitis')){
+	$pdf->SetXY(7, 97.8);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'thyroid')){
+	$pdf->SetXY(7, 102.1);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'digestive')){
+	$pdf->SetXY(7, 106.3);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'falls')){
+	$pdf->SetXY(7, 110.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'genetic')){
+	$pdf->SetXY(7, 114.9);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'stomach/ulcer')){
+	$pdf->SetXY(7, 119.3);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'developmental')){
+	$pdf->SetXY(7, 123.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'infections')){
+	$pdf->SetXY(6.7, 127.9);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'chemical')){
+	$pdf->SetXY(7, 132.2);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'seizure')){
+	$pdf->SetXY(57.8, 67.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'depression')){
+	$pdf->SetXY(57.8, 71.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'heart')){
+	$pdf->SetXY(57.8, 76);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'asthma')){
+	$pdf->SetXY(57.8, 80.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'diabetes')){
+	$pdf->SetXY(57.8, 85);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'low blood sugar')){
+	$pdf->SetXY(57.8, 89.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'other arthritis')){
+	$pdf->SetXY(57.8, 93.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'circulatory')){
+	$pdf->SetXY(57.8, 97.8);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'skin')){
+	$pdf->SetXY(57.8, 102.1);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'bowel')){
+	$pdf->SetXY(57.8, 106.3);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'cognitive')){
+	$pdf->SetXY(57.8, 110.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'ms')){
+	$pdf->SetXY(57.8, 114.9);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'osteoporosis')){
+	$pdf->SetXY(57.4, 119.3);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'anemia')){
+	$pdf->SetXY(57.8, 123.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'allergies')){
+	$pdf->SetXY(7, 136.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'cancer')){
+	$pdf->SetXY(7, 140.8);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'other neuro')){
+	$pdf->SetXY(7, 145.2);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["DIAGNOSIS"], 'other')){
+	$pdf->SetXY(7, 149.5);	
+    $pdf->Write(10, 'X');
+}
+
+//Allergies
+	$pdf->SetFontSize(9);
+	$pdf->SetXY(38, 137);	
+    $pdf->Write(10, $row["ALLERGIES"]);
+
+//Cancer
+	$pdf->SetFontSize(9);
+	$pdf->SetXY(36, 141.3);	
+    $pdf->Write(10, $row["CANCER"]);
+
+//Other Neurological problems
+	$pdf->SetFontSize(9);
+	$pdf->SetXY(63, 145.7);	
+    $pdf->Write(10, $row["NEURO_PROBLEMS"]);
+
+//Other problems
+	$pdf->SetFontSize(9);
+	$pdf->SetXY(20.5, 150.1);	
+    $pdf->Write(10, $row["OTHER_PROBLEMS"]);
+
+//Pregnancy	
+if ('Y' == $row["PREGNANT"]){
+	$pdf->Rect(79, 160.5, 8, 4);
+}elseif ('N' == $row["PREGNANT"]){
+	$pdf->Rect(86.5, 160.5, 8, 4);
+}
+
+//Medical history	
+if (strstr( $row["SYMPTOMS"], 'nausea')){
+	$pdf->SetXY(116, 67.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'dizzy')){
+	$pdf->SetXY(116, 71.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'fever')){
+	$pdf->SetXY(116, 76);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'weight loss')){
+	$pdf->SetXY(116, 80.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'night sweat')){
+	$pdf->SetXY(116, 85);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'diarrhea')){
+	$pdf->SetXY(116, 89.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'sweat')){
+	$pdf->SetXY(116, 93.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'fatigue')){
+	$pdf->SetXY(116, 97.8);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'pale')){
+	$pdf->SetXY(116, 102.1);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'chest pain')){
+	$pdf->SetXY(116, 106.3);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'lost balance')){
+	$pdf->SetXY(116, 110.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'hoarse')){
+	$pdf->SetXY(116, 114.9);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'tremors')){
+	$pdf->SetXY(116, 119.3);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'infection')){
+	$pdf->SetXY(116, 123.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'coordination')){
+	$pdf->SetXY(116, 127.9);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'appetite')){
+	$pdf->SetXY(166.7, 67.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'swallow')){
+	$pdf->SetXY(166.7, 71.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'vision')){
+	$pdf->SetXY(166.7, 76);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'cough')){
+	$pdf->SetXY(166.7, 80.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'difficulty walking')){
+	$pdf->SetXY(166.7, 85);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'headache')){
+	$pdf->SetXY(166.7, 89.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'difficulty sleeping')){
+	$pdf->SetXY(166.7, 93.5);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'chills')){
+	$pdf->SetXY(166.7, 97.8);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'blackout')){
+	$pdf->SetXY(166.7, 102.1);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'short breath')){
+	$pdf->SetXY(166.7, 106.3);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'joint pain/swelling')){
+	$pdf->SetXY(166.7, 110.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'pain at night')){
+	$pdf->SetXY(166.7, 114.9);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'hearing')){
+	$pdf->SetXY(166.7, 119.3);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'heart palpitations')){
+	$pdf->SetXY(166.7, 123.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'weakness in limbs')){
+	$pdf->SetXY(166.7, 127.9);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["SYMPTOMS"], 'urinary problems')){
+	$pdf->SetXY(166.7, 132.3);	
+    $pdf->Write(10, 'X');
+}
+
+//Surgery Date 1
+	$pdf->SetFontSize(9);
+	$pdf->SetXY(6.5, 178.5);	
+    $pdf->Write(10, $row["SURGERIES_DATE_1"]);
+
+//Surgery 1
+	$pdf->SetFontSize(9);
+	$pdf->SetXY(25, 178.5);	
+    $pdf->Write(10, $row["SURGERY_REASON_1"]);
+
+//Surgery Date 2
+	$pdf->SetFontSize(9);
+	$pdf->SetXY(6.5, 182.8);	
+    $pdf->Write(10, $row["SURGERIES_DATE_2"]);
+
+//Surgery 2
+	$pdf->SetFontSize(9);
+	$pdf->SetXY(25, 182.7);	
+    $pdf->Write(10, $row["SURGERY_REASON_2"]);
+
+//Surgery Date 3
+	$pdf->SetFontSize(9);
+	$pdf->SetXY(6.5, 186.6);	
+    $pdf->Write(10, $row["SURGERIES_DATE_3"]);
+
+//Surgery 3
+	$pdf->SetFontSize(9);
+	$pdf->SetXY(25, 186.6);	
+    $pdf->Write(10, $row["SURGERY_REASON_3"]);
+
+//Muskuloskeletal injury Date 1
+	$pdf->SetFontSize(9);
+	$pdf->SetXY(6.5, 210.7);	
+    $pdf->Write(10, $row["MUSCULOSKELETAL_INJURIES_1"]);
+
+//Muskuloskeletal injury 1
+	$pdf->SetFontSize(9);
+	$pdf->SetXY(24, 210.7);	
+    $pdf->Write(10, $row["INJURY_1"]);
+
+//Muskuloskeletal injury Date 2
+	$pdf->SetFontSize(9);
+	$pdf->SetXY(6.5, 214.8);	
+    $pdf->Write(10, $row["MUSCULOSKELETAL_INJURIES_2"]);
+
+//Muskuloskeletal injury 2
+	$pdf->SetFontSize(9);
+	$pdf->SetXY(24, 214.8);	
+    $pdf->Write(10, $row["INJURY_2"]);
+
+//Prescription Medications
+	$pdf->SetXY(6.5, 231);	
+    $pdf->Write(10, $row["PRESCRIPTIONS"]);
+
+//OTC Medications
+	$pdf->SetXY(6.5, 255.5);	
+    $pdf->Write(10, $row["OTC"]);
+
+//Medications	
+if ('Y' == $row["MEDICATIONS"]){
+	$pdf->SetXY(19.4, 191.4);	
+    	$pdf->Write(10, 'X');
+}elseif ('N' == $row["MEDICATIONS"]){
+	$pdf->SetXY(37.7, 191.4);	
+    	$pdf->Write(10, 'X');
+}
+
+//FAMILY	
+if (strstr( $row["FAMILY"], 'stroke')){
+	$pdf->SetXY(116, 149);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'parkinsons')){
+	$pdf->SetXY(116, 153.3);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'mental illnes')){
+	$pdf->SetXY(116, 157.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'high bp')){
+	$pdf->SetXY(116, 161.9);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'breathing problems')){
+	$pdf->SetXY(116, 166.2);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'arthritis')){
+	$pdf->SetXY(116, 170.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'anemia')){
+	$pdf->SetXY(116, 174.9);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'thyroid')){
+	$pdf->SetXY(116, 179.2);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'learning disability')){
+	$pdf->SetXY(116, 183.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'genetic')){
+	$pdf->SetXY(116, 187.4);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'chemical dependency')){
+	$pdf->SetXY(116, 192);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'seizure')){
+	$pdf->SetXY(166.7, 149);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'ms')){
+	$pdf->SetXY(166.7, 153.3);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'cancer')){
+	$pdf->SetXY(166.7, 157.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'heart condition')){
+	$pdf->SetXY(166.7, 161.9);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'diabetes')){
+	$pdf->SetXY(166.7, 166.2);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'kidney disease')){
+	$pdf->SetXY(166.7, 170.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'vascular problems')){
+	$pdf->SetXY(166.7, 174.9);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'skin problems')){
+	$pdf->SetXY(166.7, 179.2);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'cognitive')){
+	$pdf->SetXY(166.7, 183.6);	
+    $pdf->Write(10, 'X');
+}if (strstr( $row["FAMILY"], 'other neuro problems')){
+	$pdf->SetXY(116, 196.2);	
+    $pdf->Write(10, 'X');
+}
+
+//Family other neurologic problems
+	$pdf->SetXY(172.3, 196.5);	
+    $pdf->Write(10, $row["FAMILY_OTHER_NEURO"]);
+
+//Caffeine
+	$pdf->SetXY(195, 209);	
+    $pdf->Write(10, $row["CAFFEINE"]);
+
+//Smoke	
+if ('Y' == $row["SMOKE"]){
+	$pdf->Rect(178.2, 219.2, 9, 4);
+}elseif ('N' == $row["SMOKE"]){
+	$pdf->Rect(203.5, 219.2, 8, 4);
+}
+
+//Packs/day
+	$pdf->SetXY(190, 221);	
+    $pdf->Write(10, $row["SMOKE_PACKS"]);
+
+//Drink Alcohol	
+if ('Y' == $row["ALCOHOL"]){
+	$pdf->SetXY(150, 228.5);	
+    $pdf->Write(10, 'Yes');
+}elseif ('N' == $row["ALCOHOL"]){
+	$pdf->SetXY(150, 228.5);	
+    $pdf->Write(10, 'No');
+}
+
+//Alcohol days/week
+	$pdf->SetXY(200, 233.1);	
+    $pdf->Write(10, $row["ALCOHOL_DAYS"]);
+
+//Alcohol drinks/sitting
+	$pdf->SetXY(197, 237.1);	
+    $pdf->Write(10, $row["ALCOHOL_NUMBER"]);
+
+//Mary-jane
+	$pdf->SetXY(194, 249.5);	
+    $pdf->Write(10, $row["MARIJUANA"]);
+
+}
+
+///////////////////////////////////////////////////////////////PAGE 4/////////////////////////////////////////////////////////////////////
+////////////PAGE 4///////PAGE 4///////PAGE 4///////////////////PAGE 4///////////PAGE 4///////////PAGE 4////////////PAGE 4/////////////////
+///////////////////////////////////////////////////////////////PAGE 4/////////////////////////////////////////////////////////////////////
+
+if ($pageNo = 4) {
+    // import a page
+    $templateId = $pdf->importPage($pageNo);
+    // get the size of the imported page
+    $size = $pdf->getTemplateSize($templateId);
+    	
+    // create a page (landscape or portrait depending on the imported page size)
+    if ($size['w'] > $size['h']) {
+        $pdf->AddPage('L', array($size['w'], $size['h']));
+    } else {
+        $pdf->AddPage('P', array($size['w'], $size['h']));
+    }
+
+    // use the imported page
+    $pdf->useTemplate($templateId);
+
+	$pdf->SetAutoPageBreak(false);
+    
+
+//$db = new SQLite3('/home1/columch7/public_html/Columbia.db');
+$db = new SQLite3($columbiaDB);
+
+$ID = $_GET["ID"];
+$AUTH = $_GET["AUTH"];
+
+$results = $db->query('SELECT * FROM benton_new_patients where ID =' . $ID . ' and AUTH = ' .$AUTH);
+
+//$results = $db->query('SELECT * FROM Pasco_new_patients where ID=24');
+
+$row = $results->fetchArray();
+
+//print var_dump($row);
+//exit();
+
+//SIGNATURE
+    $pdf->SetFont('Helvetica');
+	$pdf->SetFontSize(12);
+    $pdf->SetXY(18, 252);
+	$pdf->Write(10, $row["WELCOME_SIGNATURE"]);
+	
+//Date
+	$pdf->SetXY(135, 253);
+	$pdf->Write(10, $row["WELCOME_DATE"]);
+
+}
+
+
+// Output the new PDF
+$pdf->Output();

@@ -1,0 +1,316 @@
+<?php
+
+//include '/home1/columch7/public_html/columbiaphysicaltherapyinc/form2/config.php';
+include 'config.php';
+
+require_once($fpdf);
+require_once($fpdi);
+
+// initiate FPDI
+$pdf = new FPDI();
+
+// get the page count
+
+//$pageCount = $pdf->setSourceFile('New-patient-registration.pdf');
+$pageCount = $pdf->setSourceFile('Clarkston-New-Patient-Form.pdf');
+
+// iterate through all pages
+for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+    // import a page
+    $templateId = $pdf->importPage($pageNo);
+    // get the size of the imported page
+    $size = $pdf->getTemplateSize($templateId);
+    	
+    // create a page (landscape or portrait depending on the imported page size)
+    if ($size['w'] > $size['h']) {
+        $pdf->AddPage('L', array($size['w'], $size['h']));
+    } else {
+        $pdf->AddPage('P', array($size['w'], $size['h']));
+    }
+
+    // use the imported page
+    $pdf->useTemplate($templateId);
+
+	$pdf->SetAutoPageBreak(false);
+    
+
+$db = new SQLite3($columbiaDB);
+
+$ID = $_GET["ID"];
+$AUTH = $_GET["AUTH"];
+
+$results = $db->query('SELECT * FROM clarkston_new_patients where ID =' . $ID . ' and AUTH = ' .$AUTH);
+//$results = $db->query('SELECT * FROM meridian_north_new_patients where ID =' . $ID);
+
+function decrypt_text($value, $key1, $key2)
+{
+   if(!$value || !$key1 || !$key2) return false;
+ 
+   $crypttext = base64_decode($value);
+   $decrypttext = mcrypt_decrypt(MCRYPT_RIJNDAEL_256, $key1, $crypttext, MCRYPT_MODE_ECB, $key2);
+   return trim($decrypttext);
+}
+
+$row = $results->fetchArray();
+
+//print var_dump($row);
+//exit();
+
+//Name
+    $pdf->SetFont('Helvetica');
+    $pdf->SetXY(35, 28.8);
+    $pdf->Write(10, $row["FIRST_NAME"] . " " . $row["LAST_NAME"]);
+
+//Street Address
+    $pdf->SetXY(24, 36.2);
+    $pdf->Write(10, $row["ADDRESS"]);
+
+//Email
+    $pdf->SetXY(21, 51.1);
+    $pdf->Write(10, $row["EMAIL"]);
+
+//City
+    $pdf->SetXY(18, 43.7);
+    $pdf->Write(10, $row["CITY"]);
+
+//Zip
+    $pdf->SetXY(100, 43.7);
+    $pdf->Write(10, $row["ZIP"]);
+
+//Home Phone
+    $pdf->SetXY(161, 28.8);
+    $pdf->Write(10, $row["PHONE"]);
+
+//Work Phone
+    if (strlen($row["WORK_PHONE"]) > 3){
+    $pdf->SetXY(161, 36.2);
+    $pdf->Write(10, $row["WORK_PHONE"]);
+}
+
+//Emergency Phone
+    if (strlen($row["EMERGENCY_PHONE"]) > 3){
+    $pdf->SetXY(161, 43.7);
+    $pdf->Write(10, $row["EMERGENCY_PHONE"]);
+}
+
+//DOB
+    $pdf->SetXY(35, 58.6);
+    $pdf->Write(10, decrypt_text($row["DOB"],$key1,$key2)); 
+
+if ('M' == $row["GENDER"]){
+//Gender: Male
+    $pdf->SetXY(86.8, 57.8);
+    $pdf->Write(10, "X");
+}
+else{
+//Gender: Female
+    $pdf->SetXY(104.4, 57.8);
+    $pdf->Write(10, 'X');
+}
+
+//SSN
+    $pdf->SetXY(156, 58.6);
+    $pdf->Write(10, decrypt_text($row["SSN"],$key1,$key2));
+
+//Occupation
+    $pdf->SetXY(31, 65.8);
+    $pdf->Write(10, $row["OCCUPATION"]);
+
+//Employer
+    $pdf->SetXY(120, 65.8);
+    $pdf->Write(10, $row["EMPLOYER"]);
+
+//Employer city
+    $pdf->SetFont('Helvetica','',12);
+    $pdf->SetXY(18, 73.1);
+    $pdf->Write(10, $row["EMPLOYER_CITY"]);
+
+//Employer State
+    $pdf->SetXY(125, 73.1);
+    $pdf->Write(10, $row["EMPLOYER_STATE"]);
+
+//Employer zip
+    $pdf->SetXY(172, 73.1);
+    $pdf->Write(10, $row["EMPLOYER_ZIP"]);
+
+//Physician
+    $pdf->SetXY(44, 80.5);
+    $pdf->Write(10, $row["REFERRING_PHYSICIAN"]);
+
+//Physician address
+    $pdf->SetXY(118, 80.5);
+    $pdf->Write(10, $row["PHYSICIAN_ADDRESS"]);
+
+//Physician city
+    $pdf->SetXY(18, 87);
+    $pdf->Write(10, $row["PHYSICIAN_CITY"]);
+
+//Physician zip
+    $pdf->SetXY(110, 87);
+    $pdf->Write(10, $row["PHYSICIAN_ZIP"]);
+
+//Diagnosis Code
+    $pdf->SetXY(171, 87);
+    $pdf->Write(10, $row["DIAGNOSIS_CODE"]);
+
+//Primary Insurance
+    $pdf->SetXY(27, 110.6);
+    $pdf->Write(10, $row["PRIMARY_INSURANCE_NAME"]);
+
+//Primary Insurance address
+    $pdf->SetXY(25, 118.1);
+    $pdf->Write(10, $row["PRIMARY_INSURANCE_ADDRESS"]);
+
+//PI subscriber's name
+    $pdf->SetXY(43.5, 125.5);
+    $pdf->Write(10, $row["PI_SUBSCRIBER_FIRST"] . " " . $row["PI_SUBSCRIBER_LAST"]);
+
+//PI subscriber's id
+    $pdf->SetXY(47, 132.9);
+    $pdf->Write(10, decrypt_text($row["PI_SUBSCRIBER_ID"],$key1,$key2));
+
+//PI subscriber's group number
+    $pdf->SetXY(36.5, 140.3);
+    $pdf->Write(10, $row["PI_SUBSCRIBER_GROUP_NUMBER"]);
+
+//Secondary Insurance
+    $pdf->SetXY(27, 147.7);
+    $pdf->Write(10, $row["SECONDARY_INSURANCE_NAME"]);
+
+//Secondary Insurance address
+    $pdf->SetXY(25, 155.1);
+    $pdf->Write(10, $row["SECONDARY_INSURANCE_ADDRESS"]);
+
+//SI subscriber's name
+    $pdf->SetXY(43.5, 162.5);
+    $pdf->Write(10, $row["SI_SUBSCRIBER_FIRST"] . " " . $row["SI_SUBSCRIBER_LAST"]);
+
+//SI subscriber's id
+    $pdf->SetXY(47, 169.9);
+    $pdf->Write(10, decrypt_text($row["SI_SUBSCRIBER_ID"],$key1,$key2));
+
+//SI subscriber's group number
+    $pdf->SetXY(36.5, 177.3);
+    $pdf->Write(10, $row["SI_SUBSCRIBER_GROUP_NUMBER"]);
+
+if ('OTI' == $row["NEED_TREATMENT_FOR"]){
+    $pdf->SetXY(9.1, 184);
+    $pdf->Write(10, "X");
+}
+elseif ('Auto' == $row["NEED_TREATMENT_FOR"]){
+    $pdf->SetXY(44.8, 184);
+    $pdf->Write(10, 'X');
+}
+elseif ('Accident' == $row["NEED_TREATMENT_FOR"]){
+    $pdf->SetXY(80.3, 184);
+    $pdf->Write(10, 'X');
+}
+
+//Spouse name
+    $pdf->SetXY(37, 202.7);
+    $pdf->Write(10, $row["SPOUSE_NAME"]);
+
+//Spouse DOB
+    $pdf->SetXY(29, 232.4);
+    $pdf->Write(10, decrypt_text($row["SPOUSE_DOB"],$key1,$key2));
+
+//Spouse employer
+    $pdf->SetFont('Helvetica','',12);
+    $pdf->SetXY(34.5, 210.1);
+    $pdf->Write(10, $row["SPOUSE_EMPLOYER"]);
+
+//Spouse work phone
+    if (strlen($row["SPOUSE_WORK_PHONE"]) > 3){
+    $pdf->SetXY(38, 217.5);
+    $pdf->Write(10, $row["SPOUSE_WORK_PHONE"]);
+}
+
+//Spouse ssn
+    $pdf->SetFont('Helvetica','',12);
+    $pdf->SetXY(18, 224.9);
+    $pdf->Write(10, decrypt_text($row["SPOUSE_SSN"],$key1,$key2));
+
+//Mother's name
+    $pdf->SetXY(140, 110.6);
+    $pdf->Write(10, $row["MOTHER_FIRST"] . " " . $row["MOTHER_LAST"]);
+
+//Mother's address
+    $pdf->SetXY(126, 118);
+    $pdf->Write(10, $row["MOTHER_ADDRESS"]);
+
+//Mother's city, state zip
+    if (strlen($row["MOTHER_CITY"]) > 1){
+    $pdf->SetXY(138, 125.4);
+    $pdf->Write(10, $row["MOTHER_CITY"] . ", " . $row["MOTHER_STATE"] . " " . $row["MOTHER_ZIP"]);
+}
+
+//Mother's SSN
+    $pdf->SetXY(130, 132.8);
+    $pdf->Write(10, decrypt_text($row["MOTHER_SSN"],$key1,$key2));
+
+//Mother's employer
+    $pdf->SetXY(128, 140.2);
+    $pdf->Write(10, $row["MOTHER_EMPLOYER"]);
+
+//Mother's employer phone
+    if (strlen($row["MOTHER_EMPLOYER_PHONE"]) > 3){
+    $pdf->SetXY(133, 147.6);
+    $pdf->Write(10, $row["MOTHER_EMPLOYER_PHONE"]);
+}
+
+//Father's name
+    $pdf->SetXY(138, 155);
+    $pdf->Write(10, $row["FATHER_FIRST"] . " " . $row["FATHER_LAST"]);
+
+//Father's address
+    $pdf->SetXY(126, 162.5);
+    $pdf->Write(10, $row["FATHER_ADDRESS"]);
+
+//Father's city, state zip
+    if (strlen($row["FATHER_CITY"]) > 1){
+    $pdf->SetXY(138, 169.9);
+    $pdf->Write(10, $row["FATHER_CITY"] . ", " . $row["FATHER_STATE"] . " " . $row["FATHER_ZIP"]);
+}
+
+//Father's SSN
+    $pdf->SetXY(130, 177.3);
+    $pdf->Write(10, decrypt_text($row["FATHER_SSN"],$key1,$key2));
+
+//Father's employer
+    $pdf->SetXY(128, 184.7);
+    $pdf->Write(10, $row["FATHER_EMPLOYER"]);
+
+//Father's employer phone
+    if (strlen($row["FATHER_EMPLOYER_PHONE"]) > 3){
+    $pdf->SetXY(133, 192.1);
+    $pdf->Write(10, $row["FATHER_EMPLOYER_PHONE"]);
+}
+
+//Emergency Contact
+    $pdf->SetXY(122, 210.5);
+    $pdf->Write(10, $row["EMERGENCY_CONTACT_FIRST"] . " " . $row["EMERGENCY_CONTACT_LAST"]);
+
+//Address
+    $pdf->SetXY(125.5, 218);
+    $pdf->Write(10, $row["EMERGENCY_CONTACT_ADDRESS"]);
+
+//City, State, Zip
+    $pdf->SetXY(138, 225.5);
+    $pdf->Write(10, $row["EMERGENCY_CONTACT_CITY_STATE_ZIP"]);
+
+//Emergency Contact Phone Number
+    $pdf->SetXY(122, 233);
+    $pdf->Write(10, $row["EMERGENCY_CONTACT_PHONE"]);
+
+//Signature
+    	$pdf->SetXY(87.5, 256.2);
+   	$pdf->Write(10, $row["SIGNATURE"]);
+
+//Today's Date
+	$pdf->SetXY(20, 256.2);
+   	$pdf->Write(10, $row["TODAY_DATE"]);
+
+}
+
+// Output the new PDF
+$pdf->Output();
